@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+    <body>
+        <canvas id="viewport" width="900" height="500"></canvas>
+        <div id="log"></div>
+        <script>
+        
+            var world_width = 24;
+            var world_height = 24;
+            var tile_size = 150;
+
+            var world = [
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,2,2,2,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1],
+                [1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,3,0,0,0,3,0,0,0,1],
+                [1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,2,2,0,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,4,0,0,0,0,5,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,4,0,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+            ];
+        
+            var wall_colours = {1: "rgb(200,0,0)", 2: "rgb(0,200,0)", 3: "rgb(0,0,200)" };
+        
+            var player_x = 300;
+            var player_y = 300;
+            var player_fov = 0.5 * Math.PI;
+            var player_heading = Math.PI;
+        
+            var canvas = document.getElementById('viewport');
+            var canvas_horizon = canvas.height / 2;
+            var context = canvas.getContext('2d');
+            var log_div = document.getElementById('log');
+                                
+            function draw() {
+                var ray_begin = player_heading - player_fov / 2;
+                var ray_particle_x = 0;
+                var ray_particle_y = 0;
+                
+                context.fillStyle = "rgb(0,0,0)";
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                
+                for (var col = 0; col < canvas.width; col++) {
+                    ray_angle = col / canvas.width * player_fov + ray_begin;
+                    ray_particle_x = player_x;
+                    ray_particle_y = player_y;
+                    col_height = 0;
+                    
+                    while (ray_particle_x < world_width * tile_size && ray_particle_y < world_height * tile_size) {
+                        ray_particle_x += Math.cos(ray_angle) * 0.5;
+                        ray_particle_y += Math.sin(ray_angle) * 0.5;
+                        world_x = Math.floor(ray_particle_x / (world_width * tile_size) * world_width);
+                        world_y = Math.floor(ray_particle_y / (world_height * tile_size) * world_height);
+                        /* log_div.innerHTML += "<p>ray_particle_x: " + ray_particle_x;
+                        log_div.innerHTML += "<p>ray_particle_y: " + ray_particle_y;
+                        log_div.innerHTML += "<p>world_x: " + world_x;
+                        log_div.innerHTML += "<p>world_y: " + world_y; */
+                        tile = world[world_x][world_y];
+
+                        if (tile > 0) {
+                            col_height = Math.sqrt((ray_particle_x - player_x)^2 + (ray_particle_y - player_y)^2) * 10;
+                            break;
+                        }
+                    }
+                    context.fillStyle = wall_colours[tile];
+                    context.fillRect(col, canvas_horizon - col_height / 2, 1, col_height);
+                }
+            }
+            
+            draw();
+            
+        </script>
+        <button onclick="player_x += Math.cos(player_heading); player_y += Math.sin(player_heading); draw();">^</button><br>
+        <button onclick="player_heading -= 0.1; draw();">&lt;--</button><button onclick="player_heading += 0.1; draw();">--&gt;</button> 
+    </body>
+</html>
